@@ -27,7 +27,7 @@ import time
 
 if __name__ == "__main__":
     configuration_url = "http://fgcz-s-021.uzh.ch/config/"
-    print "hostname is {0}.".format(socket.gethostname())
+    print("hostname is {0}.".format(socket.gethostname()))
     bio_beamer = biobeamer.Robocopy()
     biobeamer_xsd = "{0}/BioBeamer.xsd".format(configuration_url)
     biobeamer_xml = "{0}/BioBeamer.xml".format(configuration_url)

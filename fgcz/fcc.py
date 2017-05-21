@@ -83,7 +83,7 @@ HISTORY
 __version__ = "https://github.com/fgcz/PyFGCZ"
 
 import os
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import signal
 import platform
 import socket
@@ -135,7 +135,7 @@ class FgczCrawl(object):
                                  '[a-z]{3,18}_[0-9]{8}(_[-a-zA-Z0-9_]+){0,1}',
                                  '[-a-zA-Z0-9_]+.(raw|RAW|wiff|wiff\.scan)$']
 
-        self.regex_list = map(lambda p: re.compile(p), self.pattern_list)
+        self.regex_list = [re.compile(p) for p in self.pattern_list]
 
         self.para['min_time_diff'] = 300
         if not max_time_diff is None:
@@ -150,10 +150,10 @@ class FgczCrawl(object):
         try:
             file_list = os.listdir(path)
         except:
-            print path
+            print(path)
             res
 
-        file_list = filter(self.regex_list[idx].match, file_list)
+        file_list = list(filter(self.regex_list[idx].match, file_list))
 
         for f in file_list:
             new_path = os.path.normpath("{0}/{1}".format(path, f))
@@ -163,10 +163,10 @@ class FgczCrawl(object):
                 res.append(new_path)
 
         
-        res = filter(lambda f: time.time() - os.path.getmtime(f) > self.para[
-                     'min_time_diff'] and time.time() - os.path.getmtime(f) < self.para['max_time_diff'], res)
-        res = filter(lambda f: os.path.getsize(f) >
-                     self.para['min_size'] or os.path.isdir(f), res)
+        res = [f for f in res if time.time() - os.path.getmtime(f) > self.para[
+                     'min_time_diff'] and time.time() - os.path.getmtime(f) < self.para['max_time_diff']]
+        res = [f for f in res if os.path.getsize(f) >
+                     self.para['min_size'] or os.path.isdir(f)]
 
 
         return res
@@ -405,14 +405,14 @@ class Fcc:
 
         try:
             logger.info("trying to open '{0}' ... ".format(url))
-            config_xml = urllib.urlopen(url).read()
+            config_xml = urllib.request.urlopen(url).read()
 
             fccConfigXml = xml.dom.minidom.parseString(config_xml)
             logger.info("read {0} ... ".format(url))
         except:
             logger.error("The XML config file is missing or malformed. Error: ")
             logger.error(sys.exc_info()[1])
-            print ("Unexpected error:", sys.exc_info()[1])
+            print(("Unexpected error:", sys.exc_info()[1]))
             raise
 
         # TODO(cp): use lxml
@@ -531,7 +531,7 @@ class Fcc:
 
         except:
             logger.error("could not create pool.")
-            print sys.exc_info()
+            print(sys.exc_info())
             sys.exit(1)
 
         while True:
@@ -546,15 +546,15 @@ class Fcc:
             regex = re.compile(myPattern)
             FILES = filter(lambda p: regex.match(p), FILES)
             """
-            map(lambda x: self.process(x), crawler.run)
+            list(map(lambda x: self.process(x), crawler.run))
 
             logger.info("matching done|time={0:.2f} seconds.".format(time.time() - tStart))
 
             if not self.parameters['exec']:
                 with open(self.parameters['myOutputFile'], 'a') as f:
-                    map(lambda cmd: f.write("{0}\n".format(self.processedCmdMD5Dict[cmd])), self.processedCmdMD5Dict.keys())
+                    list(map(lambda cmd: f.write("{0}\n".format(self.processedCmdMD5Dict[cmd])), list(self.processedCmdMD5Dict.keys())))
 
-                msg = "wrote {0} lines to file to '{1}'.".format(len(self.processedCmdMD5Dict.keys()),
+                msg = "wrote {0} lines to file to '{1}'.".format(len(list(self.processedCmdMD5Dict.keys())),
                                                                self.parameters['myOutputFile'])
                 print(msg)
                 logger.info(msg)
@@ -574,8 +574,8 @@ if __name__ == "__main__":
     try:
         import yaml
         fcc = Fcc()
-        print yaml.dump(fcc.read_config(url='http://fgcz-data.uzh.ch/config/fcc_config.xml'))
+        print(yaml.dump(fcc.read_config(url='http://fgcz-data.uzh.ch/config/fcc_config.xml')))
     except:
-        print "yaml does not seems to run. exit"
+        print("yaml does not seems to run. exit")
         pass
     

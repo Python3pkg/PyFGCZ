@@ -34,7 +34,7 @@ import re
 import socket
 import unittest
 import filecmp
-import urllib
+import urllib.request, urllib.parse, urllib.error
 from lxml import etree
 
 import tempfile
@@ -67,10 +67,10 @@ class BioBeamerParser(object):
         xml_url = xml
         # read config files from url
         try:
-            f = urllib.urlopen(xml)
+            f = urllib.request.urlopen(xml)
             xml = f.read()
 
-            f = urllib.urlopen(xsd)
+            f = urllib.request.urlopen(xsd)
             xsd = f.read()
 
         except:
@@ -90,13 +90,13 @@ class BioBeamerParser(object):
         found_host_config = False
         # init para dictionary
         for i in xml_bio_beamer:
-            if i.tag == 'host' and 'name' in i.attrib.keys():
+            if i.tag == 'host' and 'name' in list(i.attrib.keys()):
                     pass
             else:
                 continue
 
             if i.attrib['name'] == hostname:
-                for k in i.attrib.keys():
+                for k in list(i.attrib.keys()):
                     if k == 'source_path' or k == 'target_path':
                         self.parameters[k] = os.path.normpath(i.attrib[k])
                     elif k == 'pattern':
@@ -120,7 +120,7 @@ class BioBeamerParser(object):
 
         if found_host_config is False:
             msg = "no host configuration could be found in '{0}'.".format(xml_url)
-            print msg
+            print(msg)
             self.logger.error(msg)
             sys.exit(1)
 
@@ -161,7 +161,7 @@ class BioBeamer(object):
 
     def print_para(self):
         """ print class parameter setting """
-        for k, v in self.parameters.items():
+        for k, v in list(self.parameters.items()):
             sys.stdout.write("{0}\t=\t{1}\n".format(k, v))
 
     def set_para(self, key, value):
@@ -186,10 +186,10 @@ class BioBeamer(object):
         """
 
 
-        files_to_copy = filter(self.regex.match, f)
-        files_to_copy = filter(lambda f: time.time() - os.path.getmtime(f) > self.parameters['min_time_diff'], files_to_copy)
-        files_to_copy = filter(lambda f: time.time() - os.path.getmtime(f) < self.parameters['max_time_diff'], files_to_copy)
-        files_to_copy = filter(lambda f: os.path.getsize(f) > self.parameters['min_size'], files_to_copy)
+        files_to_copy = list(filter(self.regex.match, f))
+        files_to_copy = [f for f in files_to_copy if time.time() - os.path.getmtime(f) > self.parameters['min_time_diff']]
+        files_to_copy = [f for f in files_to_copy if time.time() - os.path.getmtime(f) < self.parameters['max_time_diff']]
+        files_to_copy = [f for f in files_to_copy if os.path.getsize(f) > self.parameters['min_size']]
 
 
         if len(files_to_copy) < len(f):
@@ -217,7 +217,7 @@ class BioBeamer(object):
                                            onerror=lambda e: sys.stdout.write("Error: {0}\n".format(e))):
 
             # BioBeamer filters
-            files_to_copy = map(lambda f: os.path.join(root, f), files)
+            files_to_copy = [os.path.join(root, f) for f in files]
             basename_dict = {}
 
             """
@@ -241,11 +241,11 @@ class BioBeamer(object):
             
             # TODO(cp): use a reduce step for concat the lists
             # basename_dict.values() is a list of list data structure
-            files_to_copy = filter(self.bb_filter, basename_dict.values())
+            files_to_copy = list(filter(self.bb_filter, list(basename_dict.values())))
 
             # TODO(cp): remove the for loop
             for file_to_copy in files_to_copy:
-                map (lambda f: self.sync(f, func_target_mapping), file_to_copy)
+                list(map (lambda f: self.sync(f, func_target_mapping), file_to_copy))
 
         self.logger.info("done")
 
@@ -258,8 +258,8 @@ class BioBeamer(object):
 
         if self.parameters['simulate'] is True:
             self.logger.info("simulate is True. aboard.")
-            print "getmtime = {0};\ngetsize = {1} diff={2}".format(time.time() - os.path.getmtime(file_to_copy), os.path.getsize(file_to_copy), 
-                os.path.getsize(file_to_copy) - self.parameters['min_size'] )
+            print("getmtime = {0};\ngetsize = {1} diff={2}".format(time.time() - os.path.getmtime(file_to_copy), os.path.getsize(file_to_copy), 
+                os.path.getsize(file_to_copy) - self.parameters['min_size'] ))
             return
 
         try:
@@ -288,8 +288,8 @@ class Checker(BioBeamer):
         self.logger.info("write file status information to '{0}'.".format(self.temp_file))
 
     def filter(self, files_to_copy):
-        files_to_copy = filter(self.regex.match, files_to_copy)
-        files_to_copy = filter(lambda f: time.time() - os.path.getmtime(f) > self.parameters['max_time_diff'], files_to_copy)
+        files_to_copy = list(filter(self.regex.match, files_to_copy))
+        files_to_copy = [f for f in files_to_copy if time.time() - os.path.getmtime(f) > self.parameters['max_time_diff']]
         return files_to_copy
 
     def sync(self, file_to_copy, func_target_mapping=lambda x: x):
@@ -336,7 +336,7 @@ class Robocopy(BioBeamer):
         see also:
             https://technet.microsoft.com/en-us/library/cc733145.aspx
         """
-        print file_to_copy
+        print(file_to_copy)
         target_sub_path = func_target_mapping(os.path.dirname(file_to_copy))
         if target_sub_path is None:
             # self.logger.info("func_target_mapping returned 'None'")

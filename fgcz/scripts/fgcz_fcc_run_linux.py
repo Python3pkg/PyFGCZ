@@ -10,13 +10,13 @@ def create_pidfile():
     try:
         pidfile = "{0}/fcc.pid".format(tempfile.gettempdir())
         if os.path.isfile(pidfile):
-            print "{0} already exists.  exit.".format(pidfile)
+            print("{0} already exists.  exit.".format(pidfile))
             sys.exit(1)
         else:
             with open(pidfile, 'w') as f:
                 f.write("fcc is running")
     except: 
-        print "creating {0} failed.".format(pidfile)
+        print("creating {0} failed.".format(pidfile))
         sys.exit(1)
 
 def unlink_pidfile():
@@ -24,7 +24,7 @@ def unlink_pidfile():
     try:
         os.unlink(pidfile)
     except:
-        print "removing '{0}' failed".format(pidfile)
+        print("removing '{0}' failed".format(pidfile))
 
 if __name__ == "__main__":
     #create_pidfile()
@@ -32,7 +32,7 @@ if __name__ == "__main__":
         opts, args = getopt.getopt(sys.argv[1:], "hoepl", [
                                    "help", "output=", "exec", "pattern=", "loop", "hostname=", "ncpu="])
     except getopt.GetoptError as err:
-        print (str(err))
+        print((str(err)))
         sys.exit(2)
 
     fcc = fcc.Fcc()
